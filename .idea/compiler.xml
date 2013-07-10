@@ -27,6 +27,9 @@
         <module name="worldguard" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="worldguard" target="1.6" />
+    </bytecodeTargetLevel>
   </component>
 </project>
 

@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="9833f353-2ae2-4381-a2ad-7f79d53b0633" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
-    </list>
+    <list default="true" id="9833f353-2ae2-4381-a2ad-7f79d53b0633" name="Default" comment="" />
     <ignored path="worldguard.iws" />
     <ignored path=".idea/workspace.xml" />
     <file path="/Dummy.txt" changelist="9833f353-2ae2-4381-a2ad-7f79d53b0633" time="1373489476810" ignored="false" />
