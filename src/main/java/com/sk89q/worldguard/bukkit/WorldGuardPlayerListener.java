@@ -742,6 +742,20 @@ public class WorldGuardPlayerListener implements Listener {
             if (item.getTypeId() == BlockID.STEP
                     || item.getTypeId() == BlockID.WOODEN_STEP) {
                 if (!plugin.getGlobalRegionManager().hasBypass(localPlayer, world)) {
+                    if (placedInSet.allows(DefaultFlag.USE, localPlayer) && (
+                            item.getTypeId() == BlockID.STONE_BUTTON
+                            || item.getTypeId() == BlockID.WOODEN_BUTTON
+                            || item.getTypeId() == BlockID.IRON_DOOR
+                            || item.getTypeId() == BlockID.WOODEN_DOOR
+                            || item.getTypeId() == BlockID.LEVER
+                            || item.getTypeId() == BlockID.REDSTONE_REPEATER_OFF
+                            || item.getTypeId() == BlockID.REDSTONE_REPEATER_ON
+                            || item.getTypeId() == BlockID.COMPARATOR_OFF
+                            || item.getTypeId() == BlockID.COMPARATOR_ON))
+                    {
+                        // We're trying to interact with something while holding a slab, no need to block this.
+                        return;
+                    }
                     boolean cancel = false;
                     if ((block.getTypeId() == item.getTypeId()) 
                         && !set.canBuild(localPlayer)) {
