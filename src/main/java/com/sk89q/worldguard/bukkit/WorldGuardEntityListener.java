@@ -42,6 +42,7 @@ import org.bukkit.entity.ThrownPotion;
 import org.bukkit.entity.Wither;
 import org.bukkit.entity.WitherSkull;
 import org.bukkit.entity.Wolf;
+import org.bukkit.entity.minecart.ExplosiveMinecart;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -89,8 +90,6 @@ public class WorldGuardEntityListener implements Listener {
 
     private WorldGuardPlugin plugin;
 
-    private EntityType tntMinecartType;
-
     /**
      * Construct the object;
      *
@@ -98,7 +97,6 @@ public class WorldGuardEntityListener implements Listener {
      */
     public WorldGuardEntityListener(WorldGuardPlugin plugin) {
         this.plugin = plugin;
-        tntMinecartType = BukkitUtil.tryEnum(EntityType.class, "MINECART_TNT");
     }
 
     /**
@@ -297,14 +295,14 @@ public class WorldGuardEntityListener implements Listener {
                     }
                 }
 
-                if (attacker instanceof TNTPrimed || attacker.getType() == tntMinecartType) {
+                if (attacker instanceof TNTPrimed || attacker instanceof ExplosiveMinecart) {
 
                     // The check for explosion damage should be handled already... But... What ever...
                     if (wcfg.blockTNTExplosions) {
                         event.setCancelled(true);
                         return;
                     }
-                    if (wcfg.useRegions) {
+                    if (wcfg.useRegions && wcfg.explosionFlagCancellation) {
                         Vector pt = toVector(defender.getLocation());
                         RegionManager mgr = plugin.getGlobalRegionManager().get(player.getWorld());
                         ApplicableRegionSet set = mgr.getApplicableRegions(pt);
@@ -340,7 +338,7 @@ public class WorldGuardEntityListener implements Listener {
                                 tryCancelPVPEvent((Player) fireball.getShooter(), player, event, false);
                             }
                         } else {
-                            if (!set.allows(DefaultFlag.GHAST_FIREBALL, localPlayer)) {
+                            if (!set.allows(DefaultFlag.GHAST_FIREBALL, localPlayer) && wcfg.explosionFlagCancellation) {
                                 event.setCancelled(true);
                                 return;
                             }
@@ -371,7 +369,7 @@ public class WorldGuardEntityListener implements Listener {
                         }
 
                         if (attacker instanceof Creeper) {
-                            if (!set.allows(DefaultFlag.CREEPER_EXPLOSION, localPlayer)) {
+                            if (!set.allows(DefaultFlag.CREEPER_EXPLOSION, localPlayer) && wcfg.explosionFlagCancellation) {
                                 event.setCancelled(true);
                                 return;
                             }
@@ -395,7 +393,6 @@ public class WorldGuardEntityListener implements Listener {
                             }
                         }
                     }
-
                 }
             }
         }
@@ -419,7 +416,7 @@ public class WorldGuardEntityListener implements Listener {
             }
 
             // Check Mob
-            if (attacker != null && attacker instanceof LivingEntity && !(attacker instanceof Player)) {
+            if (attacker != null && !(attacker instanceof Player)) {
                 if (wcfg.disableMobDamage) {
                     event.setCancelled(true);
                     return;
@@ -539,7 +536,7 @@ public class WorldGuardEntityListener implements Listener {
                 return;
             }
 
-           if (wcfg.teleportOnSuffocation && type == DamageCause.SUFFOCATION) {
+            if (wcfg.teleportOnSuffocation && type == DamageCause.SUFFOCATION) {
                 BukkitUtil.findFreePosition(player);
                 event.setCancelled(true);
                 return;
@@ -604,7 +601,7 @@ public class WorldGuardEntityListener implements Listener {
                 for (Block block : event.blockList()) {
                     if (!mgr.getApplicableRegions(toVector(block)).allows(DefaultFlag.CREEPER_EXPLOSION)) {
                         event.blockList().clear();
-                        event.setCancelled(true);
+                        if (wcfg.explosionFlagCancellation) event.setCancelled(true);
                         return;
                     }
                 }
@@ -612,7 +609,6 @@ public class WorldGuardEntityListener implements Listener {
         } else if (ent instanceof EnderDragon) {
             if (wcfg.blockEnderDragonBlockDamage) {
                 event.blockList().clear();
-                event.setCancelled(true);
                 return;
             }
 
@@ -622,12 +618,12 @@ public class WorldGuardEntityListener implements Listener {
                 for (Block block : event.blockList()) {
                     if (!mgr.getApplicableRegions(toVector(block)).allows(DefaultFlag.ENDERDRAGON_BLOCK_DAMAGE)) {
                         event.blockList().clear();
-                        event.setCancelled(true);
+                        if (wcfg.explosionFlagCancellation) event.setCancelled(true);
                         return;
                     }
                 }
             }
-        } else if (ent instanceof TNTPrimed || (ent != null && ent.getType() == tntMinecartType)) {
+        } else if (ent instanceof TNTPrimed || ent instanceof ExplosiveMinecart) {
             if (wcfg.blockTNTExplosions) {
                 event.setCancelled(true);
                 return;
@@ -643,7 +639,7 @@ public class WorldGuardEntityListener implements Listener {
                 for (Block block : event.blockList()) {
                     if (!mgr.getApplicableRegions(toVector(block)).allows(DefaultFlag.TNT)) {
                         event.blockList().clear();
-                        event.setCancelled(true);
+                        if (wcfg.explosionFlagCancellation) event.setCancelled(true);
                         return;
                     }
                 }
@@ -675,7 +671,7 @@ public class WorldGuardEntityListener implements Listener {
                 for (Block block : event.blockList()) {
                     if (!mgr.getApplicableRegions(toVector(block)).allows(DefaultFlag.GHAST_FIREBALL)) {
                         event.blockList().clear();
-                        event.setCancelled(true);
+                        if (wcfg.explosionFlagCancellation) event.setCancelled(true);
                         return;
                     }
                 }
@@ -699,7 +695,8 @@ public class WorldGuardEntityListener implements Listener {
                 RegionManager mgr = plugin.getGlobalRegionManager().get(world);
                 for (Block block : event.blockList()) {
                     if (!mgr.getApplicableRegions(toVector(block)).allows(DefaultFlag.OTHER_EXPLOSION)) {
-                        event.setCancelled(true);
+                        event.blockList().clear();
+                        if (wcfg.explosionFlagCancellation) event.setCancelled(true);
                         return;
                     }
                 }
@@ -754,7 +751,7 @@ public class WorldGuardEntityListener implements Listener {
                 return;
             }
         } else if (event.getEntityType() == EntityType.PRIMED_TNT
-                || event.getEntityType() == tntMinecartType) {
+                || event.getEntityType() == EntityType.MINECART_TNT) {
             if (wcfg.blockTNTExplosions) {
                 event.setCancelled(true);
                 return;
@@ -774,8 +771,15 @@ public class WorldGuardEntityListener implements Listener {
         WorldConfiguration wcfg = cfg.get(event.getEntity().getWorld());
 
         // allow spawning of creatures from plugins
-        if (!wcfg.blockPluginSpawning && event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.CUSTOM)
+        if (!wcfg.blockPluginSpawning && event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.CUSTOM) {
             return;
+        }
+
+        if (wcfg.allowTamedSpawns
+                && event.getEntity() instanceof Tameable // nullsafe check
+                && ((Tameable) event.getEntity()).isTamed()) {
+            return;
+        }
 
         EntityType entityType = event.getEntityType();
 
